@@ -7,6 +7,8 @@
 - 重启即可生效
 
 ## Change Log
+- 2021.05.03
+  - v4.0 refactor
 - 2020.03.02
   - v3.0: support magisk 20.1+
 - 2018.09.23 
