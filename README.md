@@ -8,6 +8,7 @@
 
 ## Change Log
 - 2021.05.03
+  - v4.2 fix bug
   - v4.1 add new solution
   - v4.0 refactor
 - 2020.03.02
