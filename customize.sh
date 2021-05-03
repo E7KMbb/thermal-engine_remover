@@ -132,14 +132,26 @@ make_empty_bin() {
 }
 
 make_empty_all() {
-  ui_print "- 感谢coolapk@落叶凄凉TEL 提供的方案"
+  ui_print "- 感谢coolapk@落叶凄凉TEL 提供的方法"
   ui_print "- 正在进行替换"
-  find /system -name "*thermal*" -o -name "*thermald*" -o -name "*thermalc*" -o -name "*perfboostsconfig.xml*" -o -name "*perfconfigstore.xml*" -o -name "*targetconfig.xml*" -o -name "*commonresourceconfigs.xml*" -o -name "*targetresourceconfigs.xml*" -type f | while read i; do
+  find /system /vendor /product /system_ext -name "*thermal*" -o -name "*thermald*" -o -name "*thermalc*" -o -name "*perfboostsconfig.xml*" -o -name "*perfconfigstore.xml*" -o -name "*targetconfig.xml*" -o -name "*commonresourceconfigs.xml*" -o -name "*targetresourceconfigs.xml*" -type f | while read i; do
     echo "$i" | fgrep -q 'android.' && continue
     ui_print "  all: 替换了$i"
-    file_dir="$MODPATH${i%/*}"
-    [[ ! -d $file_dir ]] && mkdir -p $file_dir
-    touch $MODPATH/$i
+    for partition in vendor product system_ext; do
+      if [ $(echo "$i" | awk -F '/' '{print $2}' | grep -c "$partition") -ne "0" ]; then
+         heads="true"
+         break
+      fi
+    done
+    if [ ${heads} = "true" ]; then
+       file_dir="$MODPATH/system${i%/*}"
+       [[ ! -d $file_dir ]] && mkdir -p $file_dir
+       touch $MODPATH/system$i
+    else
+       file_dir="$MODPATH${i%/*}"
+       [[ ! -d $file_dir ]] && mkdir -p $file_dir
+       touch $MODPATH$i
+    fi
   done
   if [ -d /data/vendor/thermal ];then
      mkdir -p $MODPATH/bak
@@ -148,26 +160,30 @@ make_empty_all() {
   fi
 }
 
-  ui_print " "
-  ui_print " - 选择方法 -"
+rebak() {
+  sh $MODPATH/uninstall.sh
+}
+
+rebak
+ui_print " "
+ui_print " - 选择方法 -"
+ui_print "   选择您想要使用的替换方法:"
+ui_print "   [音量+] = conf & binary (推荐)"
+ui_print "   [音量-] = all(删的最全，但有能发生各种意外，如果没有必要请不要选择)"
+ui_print " "
+if chooseport; then
   ui_print "   选择您想要使用的替换方法:"
-  ui_print "   [音量+] = conf & binary (推荐)"
-  ui_print "   [音量-] = all(删的最全，但有能发生各种意外，如果没有必要请不要选择)"
+  ui_print "   [音量+] = conf(推荐)"
+  ui_print "   [音量-] = binary(如果conf模式不生效，请尝试这个)"
   ui_print " "
   if chooseport; then
-    ui_print "   选择您想要使用的替换方法:"
-    ui_print "   [音量+] = conf(推荐)"
-    ui_print "   [音量-] = binary(如果conf模式不生效，请尝试这个)"
-    ui_print " "
-    if chooseport; then
-      make_empty_conf
-    else
-      make_empty_bin
-    fi
+    make_empty_conf
   else
-    make_empty_all
+    make_empty_bin
   fi
-
+else
+  make_empty_all
+fi
 
 # 删除多余文件
  rm -rf \
@@ -196,4 +212,4 @@ make_empty_all() {
 # 默认权限请勿删除
 set_perm_recursive $MODPATH 0 0 0755 0644
 set_perm  $MODPATH/system/bin/thermal-engine 0 0 0755
-set_perm  $MODPATH/vendor/bin/thermal-engine 0 0 0755
+set_perm  $MODPATH/system/vendor/bin/thermal-engine 0 0 0755
