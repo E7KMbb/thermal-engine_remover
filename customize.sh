@@ -107,6 +107,7 @@ chooseport() {
 }
 
 make_empty_conf() {
+  ui_print "- 正在进行替换"
   mkdir -p ${MODPATH}/system/etc
   mkdir -p ${MODPATH}/system/vendor/etc
   for tconf in $(ls /system/etc/thermal-engine*.conf /system/vendor/etc/thermal-engine*.conf)
@@ -117,6 +118,7 @@ make_empty_conf() {
 }
 
 make_empty_bin() {
+  ui_print "- 正在进行替换"
   mkdir -p ${MODPATH}/system/bin
   mkdir -p ${MODPATH}/system/vendor/bin
   mkdir ${MODPATH}/system/vendor/lib
@@ -128,17 +130,42 @@ make_empty_bin() {
   touch $MODPATH/system/vendor/lib64/libthermalioctl.so
   touch $MODPATH/system/vendor/lib64/libthermalclient.so
 }
+
+make_empty_all() {
+  ui_print "- 感谢coolapk@落叶凄凉TEL 提供的方案"
+  ui_print "- 正在进行替换"
+  find /system -name "*thermal*" -o -name "*thermald*" -o -name "*thermalc*" -o -name "*perfboostsconfig.xml*" -o -name "*perfconfigstore.xml*" -o -name "*targetconfig.xml*" -o -name "*commonresourceconfigs.xml*" -o -name "*targetresourceconfigs.xml*" -type f | while read i; do
+    echo "$i" | fgrep -q 'android.' && continue
+    ui_print "  all: 替换了$i"
+    file_dir="$MODPATH${i%/*}"
+    [[ ! -d $file_dir ]] && mkdir -p $file_dir
+    touch $MODPATH/$i
+  done
+  if [ -d /data/vendor/thermal ];then
+     mkdir -p $MODPATH/bak
+     cp -rf /data/vendor/thermal/* $MODPATH/bak
+     rm -rf /data/vendor/thermal/*
+  fi
+}
+
   ui_print " "
   ui_print " - 选择方法 -"
   ui_print "   选择您想要使用的替换方法:"
-  ui_print "   [音量+] = conf(推荐)"
-  ui_print "   [音量-] = binary(如果conf模式不生效，请尝试这个)"
+  ui_print "   [音量+] = conf & binary (推荐)"
+  ui_print "   [音量-] = all(删的最全，但有能发生各种意外，如果没有必要请不要选择)"
   ui_print " "
-  ui_print "- 正在进行替换"
   if chooseport; then
-    make_empty_conf
+    ui_print "   选择您想要使用的替换方法:"
+    ui_print "   [音量+] = conf(推荐)"
+    ui_print "   [音量-] = binary(如果conf模式不生效，请尝试这个)"
+    ui_print " "
+    if chooseport; then
+      make_empty_conf
+    else
+      make_empty_bin
+    fi
   else
-    make_empty_bin	
+    make_empty_all
   fi
 
 
