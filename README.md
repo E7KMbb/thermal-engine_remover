@@ -7,6 +7,8 @@
 - 重启即可生效
 
 ## Change Log
+- 2021.05.28
+  - v4.3 fix volume
 - 2021.05.03
   - v4.2 fix bug
   - v4.1 add new solution

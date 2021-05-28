@@ -85,7 +85,28 @@ REPLACE="
 ##########################################################################################
 
 chmod -R 0755 $MODPATH/tools
-chooseport() {
+chooseportold() {
+  # Keycheck binary by someone755 @Github, idea for code below by Zappo @xda-developers
+  # Calling it first time detects previous input. Calling it second time will do what we want
+  while true; do
+    $MODPATH/tools/$ARCH32/keycheck
+    $MODPATH/tools/$ARCH32/keycheck
+    local SEL=$?
+    if [ "$1" == "UP" ]; then
+      UP=$SEL
+      break
+    elif [ "$1" == "DOWN" ]; then
+      DOWN=$SEL
+      break
+    elif [ $SEL -eq $UP ]; then
+      return 0
+    elif [ $SEL -eq $DOWN ]; then
+      return 1
+    fi
+  done
+}
+
+chooseport_legacy() {
   # Keycheck binary by someone755 @Github, idea for code below by Zappo @xda-developers
   # Calling it first time detects previous input. Calling it second time will do what we want
   [ "$1" ] && local delay=$1 || local delay=3
@@ -93,13 +114,50 @@ chooseport() {
   while true; do
     timeout 0 $MODPATH/tools/$ARCH32/keycheck
     timeout $delay $MODPATH/tools/$ARCH32/keycheck
-    local SEL=$?
-    if [ $SEL -eq 42 ]; then
+    local sel=$?
+    if [ $sel -eq 42 ]; then
       return 0
-    elif [ $SEL -eq 41 ]; then
+    elif [ $sel -eq 41 ]; then
       return 1
+    elif $error; then
+      ui_print "未检测到音量键!尝试使用旧的keycheck方案"
+      export chooseport=chooseportold
+      ui_print " "
+      ui_print "- 音量键录入 -"
+      ui_print "  请按音量+键:"
+      chooseport "UP"
+      ui_print "  请按音量–键"
+      chooseport "DOWN"
     else
-      $error && abort "- 音量键错误!"
+      error=true
+      echo "- 未检测到音量键。再试一次。"
+    fi
+  done
+}
+
+chooseport() {
+  # Original idea by chainfire and ianmacd @xda-developers
+  [ "$1" ] && local delay=$1 || local delay=3
+  local error=false 
+  while true; do
+    local count=0
+    while true; do
+      timeout $delay /system/bin/getevent -lqc 1 2>&1 > $TMPDIR/events &
+      sleep 0.5; count=$((count + 1))
+      if (`grep -q 'KEY_VOLUMEUP *DOWN' $TMPDIR/events`); then
+        return 0
+      elif (`grep -q 'KEY_VOLUMEDOWN *DOWN' $TMPDIR/events`); then
+        return 1
+      fi
+      [ $count -gt 15 ] && break
+    done
+    if $error; then
+      # abort "未检测到音量键!"
+      echo "未检测到音量键。 尝试keycheck模式"
+      export chooseport=chooseport_legacy VKSEL=chooseport_legacy
+      chooseport_legacy $delay
+      return $?
+    else
       error=true
       echo "- 未检测到音量键。再试一次。"
     fi

@@ -1,6 +1,6 @@
 id=thermalRemover
 name=thermal-engine Removerv unofficial
-version=v4.2
-versionCode=42
+version=v4.3
+versionCode=43
 author=cjybyjk(official) & 依然的爱(unofficial) @ coolapk
 description=这个模块可以不直接修改系统地移除温控文件
